@@ -24,19 +24,9 @@ def pygame_audio_worker():
                 path_separator = '/'
             try:
                 path = 'resources' + path_separator + playList + '.wav'
-                match playList:
-                    case 'Victory':
-                        pygame.mixer.music.load(path)
-                        pygame.mixer.music.play()
-                    case 'haqi1':
-                        pygame.mixer.music.load(path)
-                        pygame.mixer.music.play()
-                    case 'haqi2':
-                        pygame.mixer.music.load(path)
-                        pygame.mixer.music.play()
-                    case 'haqi3':
-                        pygame.mixer.music.load(path)
-                        pygame.mixer.music.play()
+                pygame.mixer.music.load(path)
+                pygame.mixer.music.play()
+                    
             except Exception as e:
                 print(f'音频播放出错: {e}')
                 playing.clear()
