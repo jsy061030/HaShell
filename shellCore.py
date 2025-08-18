@@ -174,71 +174,6 @@ def find_files(pattern: str, search_dir: str) -> list:
     # 筛选匹配的文件
     return [f for f in filenames if match_case_insensitive(f)]
 
-# 扩展命令函数映射表（修复版）
-command_functions = {
-    # 基础功能（修复 r 命令）
-    'p': lambda s: {**s, 'output': print_output(s.get('output', '')) or s.get('output', '')},
-    'i': lambda s: {**s, 'output': os.getcwd()},
-    'r': lambda s: {**s, 'user_input': input("输入: "), 'input': s.get('output', '')},
-    'g': lambda s: {
-        # 优先使用user_input作为目录路径
-        'path': s.get('user_input', '') or s.get('output', ''),
-        'result': os.chdir(s.get('user_input', '') or s.get('output', '')) if s.get('user_input', '') or s.get('output', '') else None,
-        'output': f"已切换到: {os.getcwd()}" if s.get('user_input', '') or s.get('output', '') else "错误: 未提供目录路径",
-        'user_input': s.get('user_input', '')
-    },
-    'l': lambda s: {**s, 'output': os.listdir(s.get('path', '.'))},
-    
-    # 查找功能 m（修复匹配逻辑）
-    'm': lambda s: {
-        **s,
-        'output': find_files(
-            pattern=s.get('user_input', '') or s.get('input', ''),  # 优先使用user_input
-            search_dir=s.get('path', os.getcwd())  # 使用当前工作目录
-        )
-    },
-    
-    # 文件权限管理命令 :u
-    'u': lambda s: {
-        **s,
-        'output': modify_file_permissions(
-            target=s.get('user_input', ''),  # 从 input 获取操作指令
-            file_list=s.get('output', None),  # 文件列表支持
-            current_path=s.get('path', os.getcwd())  # 当前工作目录
-        )
-    },
-    't': lambda s: {
-        **s,
-        'output': create_file(
-            file_path=s.get('user_input', '') or s.get('input', ''),
-            current_path=s.get('path', os.getcwd())
-        )
-    },
-    
-    # 创建目录命令 (directory)
-    'd': lambda s: {
-        **s,
-        'output': create_directory(
-            dir_path=s.get('user_input', '') or s.get('input', ''),
-            current_path=s.get('path', os.getcwd())
-        )
-    },
-    # 其他功能保持不变...
-    'f': lambda s: {**s, 'output': open(s.get('user_input', ''), 'r', encoding='utf-8').read() if s.get('user_input', '') else "错误: 未指定文件"},
-    'w': lambda s: (open('output.txt','w', encoding='utf-8').write(str(s.get('output',''))), s),
-    's': lambda s: {**s, 'output': str(s.get('output', ''))},
-    'n': lambda s: {**s, 'output': len(s.get('output', []))},
-    'x': lambda s: {
-        **s,
-        'output': delete_target(
-            target=s.get('user_input', '') or s.get('input', ''),
-            current_path=s.get('path', os.getcwd())
-        )
-    },
-    'c': lambda s: {**s, 'output': os.path.exists(s.get('user_input', ''))},
-    'e': lambda s: {**s, 'output': s.get('user_input', '') in os.environ},
-    '?': lambda s: {**s, 'output': s}  # 状态查看
-}
 def delete_target(target: str, current_path: str) -> str:
     """安全删除文件或目录（带确认）"""
     if not target:
@@ -534,3 +469,69 @@ def execute_command(cmd: str, initial_state: dict = None) -> dict:
         initial_state = {'input': '', 'output': None, 'user_input': '', 'path': os.getcwd()}
     
     return execute_composite_command(cmd, initial_state)
+
+# 扩展命令函数映射表（修复版）
+command_functions = {
+    # 基础功能（修复 r 命令）
+    'p': lambda s: {**s, 'output': print_output(s.get('output', '')) or s.get('output', '')},
+    'i': lambda s: {**s, 'output': os.getcwd()},
+    'r': lambda s: {**s, 'user_input': input("输入: "), 'input': s.get('output', '')},
+    'g': lambda s: {
+        # 优先使用user_input作为目录路径
+        'path': s.get('user_input', '') or s.get('output', ''),
+        'result': os.chdir(s.get('user_input', '') or s.get('output', '')) if s.get('user_input', '') or s.get('output', '') else None,
+        'output': f"已切换到: {os.getcwd()}" if s.get('user_input', '') or s.get('output', '') else "错误: 未提供目录路径",
+        'user_input': s.get('user_input', '')
+    },
+    'l': lambda s: {**s, 'output': os.listdir(s.get('path', '.'))},
+    
+    # 查找功能 m（修复匹配逻辑）
+    'm': lambda s: {
+        **s,
+        'output': find_files(
+            pattern=s.get('user_input', '') or s.get('input', ''),  # 优先使用user_input
+            search_dir=s.get('path', os.getcwd())  # 使用当前工作目录
+        )
+    },
+    
+    # 文件权限管理命令 :u
+    'u': lambda s: {
+        **s,
+        'output': modify_file_permissions(
+            target=s.get('user_input', ''),  # 从 input 获取操作指令
+            file_list=s.get('output', None),  # 文件列表支持
+            current_path=s.get('path', os.getcwd())  # 当前工作目录
+        )
+    },
+    't': lambda s: {
+        **s,
+        'output': create_file(
+            file_path=s.get('user_input', '') or s.get('input', ''),
+            current_path=s.get('path', os.getcwd())
+        )
+    },
+    
+    # 创建目录命令 (directory)
+    'd': lambda s: {
+        **s,
+        'output': create_directory(
+            dir_path=s.get('user_input', '') or s.get('input', ''),
+            current_path=s.get('path', os.getcwd())
+        )
+    },
+    # 其他功能保持不变...
+    'f': lambda s: {**s, 'output': open(s.get('user_input', ''), 'r', encoding='utf-8').read() if s.get('user_input', '') else "错误: 未指定文件"},
+    'w': lambda s: (open('output.txt','w', encoding='utf-8').write(str(s.get('output',''))), s),
+    's': lambda s: {**s, 'output': str(s.get('output', ''))},
+    'n': lambda s: {**s, 'output': len(s.get('output', []))},
+    'x': lambda s: {
+        **s,
+        'output': delete_target(
+            target=s.get('user_input', '') or s.get('input', ''),
+            current_path=s.get('path', os.getcwd())
+        )
+    },
+    'c': lambda s: {**s, 'output': os.path.exists(s.get('user_input', ''))},
+    'e': lambda s: {**s, 'output': s.get('user_input', '') in os.environ},
+    '?': lambda s: {**s, 'output': s}  # 状态查看
+}
