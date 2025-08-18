@@ -8,6 +8,8 @@ import time
 import sys
 import random
 
+import shellCore
+
 playing = threading.Event()
 stop_playing = threading.Event()
 stopable = True
@@ -26,7 +28,6 @@ def pygame_audio_worker():
                 path = 'resources' + path_separator + playList + '.wav'
                 pygame.mixer.music.load(path)
                 pygame.mixer.music.play()
-                    
             except Exception as e:
                 print(f'音频播放出错: {e}')
                 playing.clear()
@@ -59,19 +60,30 @@ audio_thread.start()
 key_listener()
 
 if __name__ == "__main__":
+    if os.environ.get('HaShellStatus') != 'silent': # Check if the environment variable is set to 'silent'
+        slientStatus = False
+    else:
+        slientStatus = True
+
     try:
         while True:
             stopable = False
             print('Ha ! ', end='')
             command = input()
+            command = command.strip()
+            command_all = command.split()
+            command = command_all[0] if command_all else ''
+            if command == '':
+                continue
             match command:
-                case ':ha':
+                case ':hajimi':
                     print('伟大的哈基米胜利！')
-                    playList = 'Victory'
-                    stopable = True
-                    playing.set()
-                    while playing.is_set():
-                        time.sleep(0.1)
+                    if not slientStatus:
+                        playList = 'Victory'
+                        stopable = True
+                        playing.set()
+                        while playing.is_set():
+                            time.sleep(0.1)
                 case ':q':
                     print('Exiting HaShell')
                     pygame.mixer.quit()
@@ -79,14 +91,18 @@ if __name__ == "__main__":
                 case ':h':
                     print('可用的提示符有: \n:h (help) \n:ha 播放哈基米胜利曲，用ESC键制裁哈基米 \n:q (quit) \n当然可以直接输入命令或程序。\n输的对有奖励，输错了有惩罚。\n')
                 case _:
-                    result = subprocess.run(command, shell=True)
-                    if result.returncode != 0:
-                        print(f'Command failed with return code {result.returncode}\n')
-                        playList = 'haqi' + random.choice(['1','2','3'])
-                        stopable = False
-                        playing.set()
-                        while playing.is_set():
-                            time.sleep(0.1)
+                    if command[0] == ':' :
+                        execute_command_state = shellCore.execute_command(command, {}) # More command execution
+                    else:
+                        result = subprocess.run(command, shell=True)
+                        if result.returncode != 0 : # Environment variable check
+                            print(f'Command failed with return code {result.returncode}\n')
+                            if not slientStatus:
+                                playList = 'haqi' + random.choice(['1','2','3'])
+                                stopable = False
+                                playing.set()
+                                while playing.is_set():
+                                    time.sleep(0.1)
     except KeyboardInterrupt:
         print('Exiting HaShell')
         pygame.mixer.quit()
